@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# --- PHASE 22 VERIFICATION: THE STICKY RAT TRAP ---
+# [*] PHASE 22 VERIFICATION: THE STICKY RAT TRAP
 
 API_URL="http://localhost:8000/analyze"
 
-echo "--- DEPLOYING THE STICKY RAT TRAP (BLACK HAT) ---"
+echo "[*] DEPLOYING THE STICKY RAT TRAP (BLACK HAT)"
 curl -s -X POST "$API_URL" \
      -H "Content-Type: application/json" \
      -d '[
@@ -12,7 +12,7 @@ curl -s -X POST "$API_URL" \
        ]' | jq -r '.abyss.final_fate'
 
 echo ""
-echo "--- DEPLOYING THE STICKY RAT TRAP (SCRIPT KIDDIE) ---"
+echo "[*] DEPLOYING THE STICKY RAT TRAP (SCRIPT KIDDIE)"
 curl -s -X POST "$API_URL" \
      -H "Content-Type: application/json" \
      -d '[

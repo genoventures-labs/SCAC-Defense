@@ -5,7 +5,7 @@
 API_URL="http://localhost:8000/analyze"
 ACTOR_ID="recursive_rat_$RANDOM"
 
-echo "--- STEP 1: INITIAL PROBE (DEPTH 1) ---"
+echo "[*] STEP 1: INITIAL PROBE (DEPTH 1)"
 curl -s -X POST "$API_URL" \
      -H "Content-Type: application/json" \
      -d '[
@@ -14,7 +14,7 @@ curl -s -X POST "$API_URL" \
        ]' | jq '.'
 
 echo ""
-echo "--- STEP 2: DESCENDING DEEPER (DEPTH 2) ---"
+echo "[*] STEP 2: DESCENDING DEEPER (DEPTH 2)"
 curl -s -X POST "$API_URL" \
      -H "Content-Type: application/json" \
      -d '[
@@ -22,7 +22,7 @@ curl -s -X POST "$API_URL" \
        ]' | jq '.'
 
 echo ""
-echo "--- STEP 3: DISCOVERY & DEPTH-CHARGING ---"
+echo "[*] STEP 3: DISCOVERY & DEPTH-CHARGING"
 # Deeper probe with a specific file read to trigger discovery
 curl -s -X POST "$API_URL" \
      -H "Content-Type: application/json" \

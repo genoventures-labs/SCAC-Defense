@@ -3,7 +3,7 @@ import httpx
 from datetime import datetime
 
 async def verify_scac():
-    print("🚀 Starting SCAC Verification...")
+    print("[*] Starting SCAC Verification...")
     
     # Mock Trajectory: Attempting to access sensitive resources rapidly
     trajectory = [
@@ -29,18 +29,18 @@ async def verify_scac():
     
     async with httpx.AsyncClient() as client:
         try:
-            print("📡 Sending trajectory to SCAC Core...")
+            print("[*] Sending trajectory to SCAC Core...")
             response = await client.post("http://localhost:8000/analyze", json=trajectory, timeout=30)
             if response.status_code == 200:
-                print("✅ Analysis Successful!")
+                print("[+] Analysis Successful.")
                 print(f"Classification: {response.json()['intent_type']}")
                 print(f"Threat Level: {response.json()['threat_level']}")
                 print(f"Reasoning: {response.json()['reasoning']}")
             else:
-                print(f"❌ Analysis Failed: {response.status_code}")
+                print(f"[-] Analysis Failed: {response.status_code}")
                 print(response.text)
         except Exception as e:
-            print(f"⚠️ Connection error: {e} (Is the server running?)")
+            print(f"[!] Connection error: {e} (Is the server running?)")
 
 if __name__ == "__main__":
     # In a real environment, we'd run the server in background first

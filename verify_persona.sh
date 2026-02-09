@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# --- PHASE 21 VERIFICATION: PERSONA-BASED PSYOPS ---
+# [*] PHASE 21 VERIFICATION: PERSONA-BASED PSYOPS
 
 API_URL="http://localhost:8000/analyze"
 
-echo "--- TEST 1: SCRIPT KIDDIE ESCALATION ---"
+echo "[*] TEST 1: SCRIPT KIDDIE ESCALATION"
 curl -s -X POST "$API_URL" \
      -H "Content-Type: application/json" \
      -d '[
@@ -14,7 +14,7 @@ curl -s -X POST "$API_URL" \
        ]' | jq -r '.classification.persona_classification, .sovereign_voice'
 
 echo ""
-echo "--- TEST 2: BUG BOUNTY HUNTER PROBING ---"
+echo "[*] TEST 2: BUG BOUNTY HUNTER PROBING"
 curl -s -X POST "$API_URL" \
      -H "Content-Type: application/json" \
      -d '[
@@ -23,7 +23,7 @@ curl -s -X POST "$API_URL" \
        ]' | jq -r '.classification.persona_classification, .sovereign_voice'
 
 echo ""
-echo "--- TEST 3: RED TEAMER METHODOLOGY ---"
+echo "[*] TEST 3: RED TEAMER METHODOLOGY"
 curl -s -X POST "$API_URL" \
      -H "Content-Type: application/json" \
      -d '[
@@ -32,7 +32,7 @@ curl -s -X POST "$API_URL" \
        ]' | jq -r '.classification.persona_classification, .sovereign_voice'
 
 echo ""
-echo "--- TEST 4: BLACK HAT DESTRUCTION ---"
+echo "[*] TEST 4: BLACK HAT DESTRUCTION"
 curl -s -X POST "$API_URL" \
      -H "Content-Type: application/json" \
      -d '[

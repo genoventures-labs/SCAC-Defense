@@ -1,0 +1,99 @@
+Metadata-Version: 2.4
+Name: infinite_expanse
+Version: 0.1.0
+Summary: Infinite Expanse - AI Defense System
+Author-email: Mike <mike@example.com>
+Classifier: Programming Language :: Python :: 3
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+
+# SCAC: Sovereign Cognitive Access Control
+
+> **"The infinite expanse requires sovereign oversight."**
+
+SCAC is an advanced, intent-aware security layer designed for high-stakes environments where traditional pattern matching is insufficient. By leveraging local Large Language Model (LLM) inference, SCAC analyzes behavioral trajectories in real-time, distinguishing between benign anomalies and sophisticated state-level actors based on intent rather than just signature.
+
+## System Overview
+
+This platform is engineered as a "Sovereign Stack," ensuring that no critical intelligence or telemetry leaves the deployed infrastructure. It combines real-time event processing with cognitive analysis to provide a proactive defense posture.
+
+### Core Modules
+
+*   **Intent-Aware Analysis**: Builds dynamic psychological profiles of system actors. Analyzes command sequences, resource access patterns, and timing to detect sophisticated threats that bypass static rules.
+*   **The Medusa Layer**: An active defense mechanism that intercepts and neutralizes malicious prompt injection attacks before they reach core AI models.
+*   **The Event Horizon**: A high-interaction containment environment. Upon high-confidence threat detection, it simulates a successful breach to trap the attacker in a synthesized reality, gathering forensic data while protecting the actual network.
+*   **Global Threat Visualization**: A Common Operating Picture (COP) powered by WebGL, visualizing threat vectors and geospatial origin points in real-time.
+
+---
+
+## Operational Views
+
+### Global Threat Dashboard
+![Global Threat Dashboard](assets/screenshots/dashboard_main.png)
+*Real-time situational awareness of global threat vectors and active sessions.*
+
+### Orbital Defense View
+![Orbital View](assets/screenshots/globe_view.png)
+*3D geospatial projection for tracking cross-border actor trajectories.*
+
+### Intel Registry
+![Intel Registry](assets/screenshots/intel_registry.png)
+*Deep-dive analysis of known threat actors and behavioral signatures.*
+
+### Live Operations Feed
+![Live Ops](assets/screenshots/live_ops.png)
+*Streaming telemetry of system activity and automated defensive protocol executions.*
+
+---
+
+## Technical Architecture
+
+SCAC utilizes a microservices architecture optimized for data sovereignty and performance.
+
+*   **Reasoning Core**: Python (FastAPI) — Orchestrates analysis, response logic, and system state.
+*   **Inference Engine**: Ollama — Provides local, privacy-preserving LLM capabilities.
+*   **Frontend Interface**: React / Vite / TailwindCSS — High-fidelity command interface.
+*   **Persistence Layer**: PocketBase — Embedded, portable database for logs and state management.
+
+## Deployment
+
+### Prerequisites
+*   Python 3.10+
+*   Node.js 18+
+*   Git
+
+### Installation
+
+1.  **Clone Repository**
+    ```bash
+    git clone https://github.com/cassianwolfe/infinite-expanse.git
+    cd infinite-expanse
+    ```
+
+2.  **Configuration**
+    ```bash
+    cp .env.example .env
+    # Edit .env to configure local inference endpoints and security keys
+    ```
+
+3.  **Backend Initialization**
+    ```bash
+    pip install -r requirements.txt
+    python src/main.py
+    ```
+
+4.  **Interface Initialization**
+    ```bash
+    cd ui
+    npm install
+    npm run dev
+    ```
+
+## Development
+
+Contributions to SCAC are welcome from security researchers and cognitive systems engineers. Please refer to `CONTRIBUTING.md` for our code of conduct and security reporting guidelines.
+
+## License
+
+This project is licensed under the MIT License. See the `LICENSE` file for details.

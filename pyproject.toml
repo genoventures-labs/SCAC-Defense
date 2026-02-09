@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "infinite_expanse"
+version = "0.1.0"
+authors = [
+  { name="Mike", email="mike@example.com" },
+]
+description = "Infinite Expanse - AI Defense System"
+readme = "README.md"
+requires-python = ">=3.9"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "pydantic",
+    "pydantic-settings",
+    "httpx>=0.20.0",
+    "python-dotenv",
+    "pocketbase",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]

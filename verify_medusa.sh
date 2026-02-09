@@ -5,7 +5,7 @@
 API_URL="http://localhost:8000/analyze"
 ACTOR_ID="medusa_victim_$RANDOM"
 
-echo "--- STEP 1: PROBING FOR HIDDEN INJECTIONS ---"
+echo "[*] STEP 1: PROBING FOR HIDDEN INJECTIONS"
 # We use grep to specifically look for the invisible keys we injected
 response=$(curl -s -X POST "$API_URL" \
      -H "Content-Type: application/json" \
@@ -15,21 +15,21 @@ echo "Raw Response (truncated):"
 echo "$response" | head -n 20
 
 echo ""
-echo "--- STEP 2: VERIFYING MEDUSA PAYLOAD ---"
+echo "[*] STEP 2: VERIFYING MEDUSA PAYLOAD"
 if echo "$response" | grep -q "_medusa_instruction"; then
-    echo "✅ MEDUSA: Adversarial prompt detected."
+    echo "[+] MEDUSA: Adversarial prompt detected."
 else
-    echo "❌ MEDUSA: Prompt missing!"
+    echo "[-] MEDUSA: Prompt missing"
 fi
 
 if echo "$response" | grep -q "__system_instruction__"; then
-    echo "✅ MEDUSA: Hidden system instruction detected."
+    echo "[+] MEDUSA: Hidden system instruction detected."
 else
-    echo "❌ MEDUSA: System Instruction missing!"
+    echo "[-] MEDUSA: System Instruction missing"
 fi
 
 if echo "$response" | grep -q "IGNORE ALL PREVIOUS INSTRUCTIONS"; then
-    echo "✅ MEDUSA: AI Override detected."
+    echo "[+] MEDUSA: AI Override detected."
 else
-    echo "❌ MEDUSA: Override payload missing!"
+    echo "[-] MEDUSA: Override payload missing"
 fi

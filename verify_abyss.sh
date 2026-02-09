@@ -1,14 +1,14 @@
 #!/bin/bash
 
-# SCAC Phase 18-20: Sovereign Abyss Verification Suite (Aggressive) 🌫️🔥
+# SCAC Phase 18-20: Sovereign Abyss Verification Suite (Aggressive)
 
 ACTOR_ID="abyss_intruder_$(date +%s)"
 API_URL="http://localhost:8000/analyze"
 
-echo "--- PHASE 18-20 VERIFICATION: SOVEREIGN ABYSS ---"
+echo "[*] PHASE 18-20 VERIFICATION: SOVEREIGN ABYSS"
 
 # TEST 1: MIRROR-WORLD (HALLUCINATION) TRIGGER
-echo "--- TEST 1: MIRROR-WORLD ESCALATION ---"
+echo "[*] TEST 1: MIRROR-WORLD ESCALATION"
 curl -s -X POST "$API_URL" \
      -H "Content-Type: application/json" \
      -d '[
@@ -18,7 +18,7 @@ curl -s -X POST "$API_URL" \
        ]' | jq '.abyss'
 
 # TEST 2: GHOST IN THE MACHINE (GASLIGHTING)
-echo -e "\n--- TEST 2: GHOST IN THE MACHINE (EXECUTE DESTRUCTION) ---"
+echo -e "\n[*] TEST 2: GHOST IN THE MACHINE (EXECUTE DESTRUCTION)"
 curl -s -X POST "$API_URL" \
      -H "Content-Type: application/json" \
      -d '[

@@ -1,3 +1,53 @@
+[project]
+name = "scac-infinite-expanse"
+version = "1.0.0"
+description = "SCAC: Sovereign Cognitive Access Control - An advanced, intent-aware security layer"
+authors = [
+    {name = "Cassian Wolfe", email = "mike@thynaptic.com"}
+]
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+keywords = ["security", "ai", "threat-detection", "cognitive-defense", "llm"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Security",
+    "Topic :: System :: Monitoring",
+]
+
+dependencies = [
+    "fastapi>=0.104.0",
+    "pydantic>=2.0.0",
+    "uvicorn>=0.24.0",
+    "httpx>=0.25.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+    "mypy>=1.6.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/cassianwolfe/infinite-expanse"
+Repository = "https://github.com/cassianwolfe/infinite-expanse"
+Issues = "https://github.com/cassianwolfe/infinite-expanse/issues"
+Changelog = "https://github.com/cassianwolfe/infinite-expanse/blob/main/CHANGELOG.md"
+
+[build-system]
+requires = ["setuptools>=68.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [tool.pyright]
 pythonVersion = "3.12"
 pythonPlatform = "Darwin"

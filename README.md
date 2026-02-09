@@ -23,6 +23,24 @@ A psychological deterrence system. When a high-confidence threat is engaged, the
 ### 🌍 Global Threat Visualization
 A real-time, 3D command center powered by Globe.gl, visualizing threat vectors, origin points, and system health in a stunning, movie-grade interface.
 
+## 📸 Visual Intelligence
+
+### Global Threat Dashboard
+![Global Threat Dashboard](assets/screenshots/dashboard_main.png)
+*Real-time visualization of threat vectors and active sessions.*
+
+### Orbital Defense View
+![Orbital View](assets/screenshots/globe_view.png)
+*3D geospatial projection for tracking state-level actors.*
+
+### Intel Registry & Profiles
+![Intel Registry](assets/screenshots/intel_registry.png)
+*Deep-dive analysis of known threat actors and their behavioral signatures.*
+
+### Live Operations Feed
+![Live Ops](assets/screenshots/live_ops.png)
+*Streaming logs of system activity and defensive protocol executions.*
+
 ## 🏗️ Architecture
 
 SCAC is built on a Sovereign Stack philosophy—no critical data leaves your infrastructure.

@@ -1,90 +1,89 @@
-# SCAC — Sovereign Cognitive Access Control
-
-![SCAC Banner](https://img.shields.io/badge/Status-Active_Defense-red?style=for-the-badge) 
-![Python](https://img.shields.io/badge/Backend-FastAPI-blue?style=for-the-badge&logo=python)
-![Frontend](https://img.shields.io/badge/Frontend-React_Globe.gl-61DAFB?style=for-the-badge&logo=react)
-![AI](https://img.shields.io/badge/AI-Ollama_Local-black?style=for-the-badge&logo=ollama)
+# SCAC: Sovereign Cognitive Access Control
 
 > **"The infinite expanse requires sovereign oversight."**
 
-SCAC is an advanced, intent-aware security layer designed for high-stakes environments where traditional pattern matching fails. By leveraging local LLM inference, SCAC analyzes behavioral trajectories in real-time, detecting not just *what* an actor is doing, but *why* they are doing it.
+SCAC is an advanced, intent-aware security layer designed for high-stakes environments where traditional pattern matching is insufficient. By leveraging local Large Language Model (LLM) inference, SCAC analyzes behavioral trajectories in real-time, distinguishing between benign anomalies and sophisticated state-level actors based on intent rather than just signature.
 
-## 🚀 Key Capabilities
+## System Overview
 
-### 🧠 Intent-Aware Analysis
-Unlike static firewalls, SCAC builds a psychological profile of every actor. It analyzes command sequences, resource access patterns, and timing to distinguish between a clumsy developer and a sophisticated state-level actor.
+This platform is engineered as a "Sovereign Stack," ensuring that no critical intelligence or telemetry leaves the deployed infrastructure. It combines real-time event processing with cognitive analysis to provide a proactive defense posture.
 
-### 🛡️ The Medusa Layer
-An active defense mechanism that intercepts malicious prompts and injection attacks before they reach core systems. It continuously evolves, using adversarial training to stay ahead of AI-powered threats.
+### Core Modules
 
-### 🌌 The Event Horizon
-A psychological deterrence system. When a high-confidence threat is engaged, the Event Horizon simulates a successful breach, trapping the attacker in a recursive, synthesized reality while gathering forensic data.
+*   **Intent-Aware Analysis**: Builds dynamic psychological profiles of system actors. Analyzes command sequences, resource access patterns, and timing to detect sophisticated threats that bypass static rules.
+*   **The Medusa Layer**: An active defense mechanism that intercepts and neutralizes malicious prompt injection attacks before they reach core AI models.
+*   **The Event Horizon**: A high-interaction containment environment. Upon high-confidence threat detection, it simulates a successful breach to trap the attacker in a synthesized reality, gathering forensic data while protecting the actual network.
+*   **Global Threat Visualization**: A Common Operating Picture (COP) powered by WebGL, visualizing threat vectors and geospatial origin points in real-time.
 
-### 🌍 Global Threat Visualization
-A real-time, 3D command center powered by Globe.gl, visualizing threat vectors, origin points, and system health in a stunning, movie-grade interface.
+---
 
-## 📸 Visual Intelligence
+## Operational Views
 
 ### Global Threat Dashboard
 ![Global Threat Dashboard](assets/screenshots/dashboard_main.png)
-*Real-time visualization of threat vectors and active sessions.*
+*Real-time situational awareness of global threat vectors and active sessions.*
 
 ### Orbital Defense View
 ![Orbital View](assets/screenshots/globe_view.png)
-*3D geospatial projection for tracking state-level actors.*
+*3D geospatial projection for tracking cross-border actor trajectories.*
 
-### Intel Registry & Profiles
+### Intel Registry
 ![Intel Registry](assets/screenshots/intel_registry.png)
-*Deep-dive analysis of known threat actors and their behavioral signatures.*
+*Deep-dive analysis of known threat actors and behavioral signatures.*
 
 ### Live Operations Feed
 ![Live Ops](assets/screenshots/live_ops.png)
-*Streaming logs of system activity and defensive protocol executions.*
+*Streaming telemetry of system activity and automated defensive protocol executions.*
 
-## 🏗️ Architecture
+---
 
-SCAC is built on a Sovereign Stack philosophy—no critical data leaves your infrastructure.
+## Technical Architecture
 
-- **Reasoning Core**: Python / FastAPI — The brain that orchestrates analysis and response.
-- **Inference Engine**: Ollama — Local LLM integration for privacy-preserving intelligence.
-- **Frontend**: React / Vite / TailwindCSS — High-performance, cinematic UI.
-- **Persistence**: PocketBase — Lightweight, portable database for logs and state.
+SCAC utilizes a microservices architecture optimized for data sovereignty and performance.
 
-## 🛠️ Installation & Setup
+*   **Reasoning Core**: Python (FastAPI) — Orchestrates analysis, response logic, and system state.
+*   **Inference Engine**: Ollama — Provides local, privacy-preserving LLM capabilities.
+*   **Frontend Interface**: React / Vite / TailwindCSS — High-fidelity command interface.
+*   **Persistence Layer**: PocketBase — Embedded, portable database for logs and state management.
 
-1.  **Clone the Repository**
+## Deployment
+
+### Prerequisites
+*   Python 3.10+
+*   Node.js 18+
+*   Git
+
+### Installation
+
+1.  **Clone Repository**
     ```bash
     git clone https://github.com/cassianwolfe/infinite-expanse.git
     cd infinite-expanse
     ```
 
-2.  **Environment Configuration**
+2.  **Configuration**
     ```bash
     cp .env.example .env
-    # Update .env with your local configuration
+    # Edit .env to configure local inference endpoints and security keys
     ```
 
-3.  **Backend Setup**
+3.  **Backend Initialization**
     ```bash
     pip install -r requirements.txt
     python src/main.py
     ```
 
-4.  **Frontend Setup**
+4.  **Interface Initialization**
     ```bash
     cd ui
     npm install
     npm run dev
     ```
 
-## 🤝 Contributing
+## Development
 
-We welcome contributions from security researchers and cognitive engineers. Please read our `CONTRIBUTING.md` (coming soon) for details on our code of conduct and the process for submitting pull requests.
+Contributions to SCAC are welcome from security researchers and cognitive systems engineers. Please refer to `CONTRIBUTING.md` for our code of conduct and security reporting guidelines.
 
-## 📄 License
+## License
 
-This project is licensed under the MIT License - see the `LICENSE` file for details.
-
----
-
-*Designed for the Sovereign Web.*
+This project is licensed under the MIT License. See the `LICENSE` file for details.

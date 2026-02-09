@@ -7,26 +7,48 @@ import {
 
 const Compliance = () => {
     const [auditLogs, setAuditLogs] = useState([]);
+    const [allLogs, setAllLogs] = useState([]); // Store all for filtering
     const [isLoading, setIsLoading] = useState(true);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [statusFilter, setStatusFilter] = useState('all'); // all, success, failed
+    const [actionFilter, setActionFilter] = useState('all'); // all, create, update, delete, etc.
+    const [showFilterMenu, setShowFilterMenu] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [violations, setViolations] = useState(0);
+    const logsPerPage = 50;
 
     useEffect(() => {
         const fetchLogs = async () => {
             try {
-                const result = await pb.collection('scac_access_logs').getList(1, 100, {
+                const result = await pb.collection('scac_access_logs').getList(1, 200, {
                     sort: '-created',
                     filter: 'action != "read"' // Filter out noisy read actions for "audit" feel
                 });
 
-                const mapped = result.items.map(r => ({
-                    id: r.id,
-                    timestamp: new Date(r.created).toLocaleString(),
-                    user: r.actor_id || 'system',
-                    action: (r.action || 'UNKNOWN').toUpperCase(),
-                    resource: r.resource || 'N/A',
-                    status: r.context?.status === 'failure' ? 'Failed' : 'Success',
-                    hash: r.id.split('').reverse().join('') + '...' // Mock integrity hash based on ID
+                const mapped = await Promise.all(result.items.map(async r => {
+                    // Generate real SHA-256 hash for integrity
+                    const dataString = `${r.id}${r.created}${r.actor_id}${r.action}${r.resource}`;
+                    const hashBuffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(dataString));
+                    const hashArray = Array.from(new Uint8Array(hashBuffer));
+                    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+                    return {
+                        id: r.id,
+                        timestamp: new Date(r.created).toLocaleString(),
+                        user: r.actor_id || 'system',
+                        action: (r.action || 'UNKNOWN').toUpperCase(),
+                        resource: r.resource || 'N/A',
+                        status: r.context?.status === 'failure' ? 'Failed' : 'Success',
+                        hash: hashHex.substring(0, 16) + '...' // First 16 chars of SHA-256
+                    };
                 }));
+
+                setAllLogs(mapped);
                 setAuditLogs(mapped);
+
+                // Calculate violations (failed actions)
+                const failedCount = mapped.filter(log => log.status === 'Failed').length;
+                setViolations(failedCount);
             } catch (err) {
                 console.error("Error fetching audit logs:", err);
             } finally {
@@ -37,8 +59,14 @@ const Compliance = () => {
         fetchLogs();
 
         // Realtime subscription
-        pb.collection('scac_access_logs').subscribe('*', function (e) {
+        pb.collection('scac_access_logs').subscribe('*', async function (e) {
             if (e.action === 'create' && e.record.action !== 'read') {
+                // Generate hash for new log
+                const dataString = `${e.record.id}${e.record.created}${e.record.actor_id}${e.record.action}${e.record.resource}`;
+                const hashBuffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(dataString));
+                const hashArray = Array.from(new Uint8Array(hashBuffer));
+                const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
                 const newLog = {
                     id: e.record.id,
                     timestamp: new Date(e.record.created).toLocaleString(),
@@ -46,9 +74,16 @@ const Compliance = () => {
                     action: (e.record.action || 'UNKNOWN').toUpperCase(),
                     resource: e.record.resource || 'N/A',
                     status: e.record.context?.status === 'failure' ? 'Failed' : 'Success',
-                    hash: 'PENDING_VERIFICATION...'
+                    hash: hashHex.substring(0, 16) + '...'
                 };
-                setAuditLogs(prev => [newLog, ...prev]);
+
+                setAllLogs(prev => {
+                    const updated = [newLog, ...prev];
+                    // Update violations count
+                    const failedCount = updated.filter(log => log.status === 'Failed').length;
+                    setViolations(failedCount);
+                    return updated;
+                });
             }
         });
 
@@ -56,6 +91,36 @@ const Compliance = () => {
             pb.collection('scac_access_logs').unsubscribe('*');
         };
     }, []);
+
+    // Apply search and filters
+    useEffect(() => {
+        let filtered = [...allLogs];
+
+        // Status filter
+        if (statusFilter !== 'all') {
+            filtered = filtered.filter(log => log.status.toLowerCase() === statusFilter);
+        }
+
+        // Action filter
+        if (actionFilter !== 'all') {
+            filtered = filtered.filter(log => log.action.toLowerCase().includes(actionFilter.toLowerCase()));
+        }
+
+        // Search filter
+        if (searchQuery.trim()) {
+            const query = searchQuery.toLowerCase();
+            filtered = filtered.filter(log =>
+                log.id.toLowerCase().includes(query) ||
+                log.user.toLowerCase().includes(query) ||
+                log.action.toLowerCase().includes(query) ||
+                log.resource.toLowerCase().includes(query) ||
+                log.hash.toLowerCase().includes(query)
+            );
+        }
+
+        setAuditLogs(filtered);
+        setCurrentPage(1); // Reset to first page when filters change
+    }, [searchQuery, statusFilter, actionFilter, allLogs]);
 
     const handleExport = () => {
         if (!auditLogs.length) return;
@@ -126,26 +191,80 @@ const Compliance = () => {
                 <div className="bg-slate-900 border border-slate-800 p-4 rounded-lg flex flex-col justify-between">
                     <span className="text-slate-500 text-xs font-medium uppercase">Active Violations</span>
                     <div className="flex items-center gap-2 mt-1">
-                        <ShieldCheck className="w-5 h-5 text-emerald-500" />
-                        <span className="text-xl font-bold text-white">0</span>
+                        {violations > 0 ? (
+                            <AlertTriangle className="w-5 h-5 text-amber-500" />
+                        ) : (
+                            <ShieldCheck className="w-5 h-5 text-emerald-500" />
+                        )}
+                        <span className="text-xl font-bold text-white">{violations}</span>
                     </div>
-                    <span className="text-slate-500 text-xs mt-2">All checks passed</span>
+                    <span className="text-slate-500 text-xs mt-2">
+                        {violations > 0 ? `${violations} failed action${violations > 1 ? 's' : ''}` : 'All checks passed'}
+                    </span>
                 </div>
             </div>
 
             {/* Filters */}
-            <div className="bg-slate-900 border border-slate-800 rounded-lg p-3 flex gap-4">
+            <div className="bg-slate-900 border border-slate-800 rounded-lg p-3 flex gap-4 relative">
                 <div className="relative flex-1">
                     <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
                     <input
                         type="text"
-                        placeholder="Search by ID, User, or Resource hash..."
+                        placeholder="Search by ID, User, Action, or Resource..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
                         className="w-full bg-slate-950 border border-slate-700 rounded-md py-2 pl-9 pr-3 text-sm text-slate-300 focus:outline-none focus:border-emerald-500 transition-colors"
                     />
                 </div>
-                <button className="flex items-center gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded border border-slate-700 text-sm transition-colors">
+
+                <button
+                    onClick={() => setShowFilterMenu(!showFilterMenu)}
+                    className="flex items-center gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded border border-slate-700 text-sm transition-colors"
+                >
                     <Filter className="w-4 h-4" /> Filter
+                    {(statusFilter !== 'all' || actionFilter !== 'all') && (
+                        <span className="w-2 h-2 bg-emerald-500 rounded-full"></span>
+                    )}
                 </button>
+
+                {showFilterMenu && (
+                    <div className="absolute right-0 top-full mt-2 w-64 bg-slate-900 border border-slate-700 rounded-lg shadow-xl z-50 p-3">
+                        <div className="mb-3">
+                            <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Status</p>
+                            <div className="flex gap-2">
+                                {['all', 'success', 'failed'].map(status => (
+                                    <button
+                                        key={status}
+                                        onClick={() => setStatusFilter(status)}
+                                        className={`px-2 py-1 text-xs font-medium rounded capitalize transition-colors ${statusFilter === status
+                                                ? 'bg-emerald-600 text-white'
+                                                : 'bg-slate-800 text-slate-400 hover:text-white'
+                                            }`}
+                                    >
+                                        {status}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                        <div>
+                            <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Action Type</p>
+                            <div className="flex flex-wrap gap-2">
+                                {['all', 'create', 'update', 'delete', 'login'].map(action => (
+                                    <button
+                                        key={action}
+                                        onClick={() => setActionFilter(action)}
+                                        className={`px-2 py-1 text-xs font-medium rounded capitalize transition-colors ${actionFilter === action
+                                                ? 'bg-emerald-600 text-white'
+                                                : 'bg-slate-800 text-slate-400 hover:text-white'
+                                            }`}
+                                    >
+                                        {action}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Audit Log Table */}
@@ -164,7 +283,7 @@ const Compliance = () => {
                             </tr>
                         </thead>
                         <tbody className="text-sm text-slate-300 divide-y divide-slate-800">
-                            {auditLogs.map((log) => (
+                            {auditLogs.slice((currentPage - 1) * logsPerPage, currentPage * logsPerPage).map((log) => (
                                 <tr key={log.id} className="hover:bg-slate-800/30 transition-colors">
                                     <td className="p-4 font-mono text-xs text-emerald-500">{log.id}</td>
                                     <td className="p-4 text-slate-400">{log.timestamp}</td>
@@ -192,6 +311,7 @@ const Compliance = () => {
                                             }`}>
                                             {log.status === 'Success' && <CheckCircle className="w-3 h-3" />}
                                             {log.status.includes('Pending') && <AlertTriangle className="w-3 h-3" />}
+                                            {log.status === 'Failed' && <AlertTriangle className="w-3 h-3" />}
                                             {log.status}
                                         </span>
                                     </td>
@@ -201,14 +321,28 @@ const Compliance = () => {
                     </table>
                 </div>
                 <div className="p-4 border-t border-slate-800 bg-slate-950/30 flex justify-between items-center text-xs text-slate-500">
-                    <span>Showing 5 of 24,102 records</span>
+                    <span>
+                        Showing {Math.min((currentPage - 1) * logsPerPage + 1, auditLogs.length)}-{Math.min(currentPage * logsPerPage, auditLogs.length)} of {auditLogs.length} records
+                    </span>
                     <div className="flex gap-2">
-                        <button className="px-3 py-1 bg-slate-800 rounded hover:bg-slate-700 disabled:opacity-50">Previous</button>
-                        <button className="px-3 py-1 bg-slate-800 rounded hover:bg-slate-700">Next</button>
+                        <button
+                            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                            disabled={currentPage === 1}
+                            className="px-3 py-1 bg-slate-800 rounded hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                            Previous
+                        </button>
+                        <button
+                            onClick={() => setCurrentPage(prev => Math.min(Math.ceil(auditLogs.length / logsPerPage), prev + 1))}
+                            disabled={currentPage >= Math.ceil(auditLogs.length / logsPerPage)}
+                            className="px-3 py-1 bg-slate-800 rounded hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                            Next
+                        </button>
                     </div>
                 </div>
-            </div >
-        </div >
+            </div>
+        </div>
     );
 };
 

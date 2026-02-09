@@ -3,7 +3,6 @@ import { Activity, Server, Cpu, HardDrive, Wifi, AlertCircle, CheckCircle } from
 import pb from '../../lib/pocketbase';
 
 const SystemHealth = () => {
-    // Mock system stats - in a real app, this would come from a dedicated telemetry collection or backend endpoint
     const [nodes, setNodes] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -82,7 +81,9 @@ const SystemHealth = () => {
                     </div>
                     <div>
                         <div className="text-xs text-slate-500 uppercase font-medium">Active Nodes</div>
-                        <div className="text-2xl font-bold text-white">4/4</div>
+                        <div className="text-2xl font-bold text-white">
+                            {nodes.filter(n => n.status === 'optimal').length}/{nodes.length}
+                        </div>
                     </div>
                 </div>
                 <div className="bg-slate-900 border border-slate-800 p-4 rounded-lg flex items-center">
@@ -101,8 +102,10 @@ const SystemHealth = () => {
                         <HardDrive className="w-6 h-6 text-purple-500" />
                     </div>
                     <div>
-                        <div className="text-xs text-slate-500 uppercase font-medium">Valid Storage</div>
-                        <div className="text-2xl font-bold text-white">12.4 TB</div>
+                        <div className="text-xs text-slate-500 uppercase font-medium">Avg Memory</div>
+                        <div className="text-2xl font-bold text-white">
+                            {nodes.length > 0 ? Math.round(nodes.reduce((acc, curr) => acc + (curr.memory || 0), 0) / nodes.length) : 0}%
+                        </div>
                     </div>
                 </div>
                 <div className="bg-slate-900 border border-slate-800 p-4 rounded-lg flex items-center">

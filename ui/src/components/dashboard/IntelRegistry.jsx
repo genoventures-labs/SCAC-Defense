@@ -8,13 +8,16 @@ import {
 const IntelRegistry = () => {
     const [selectedActor, setSelectedActor] = useState(null);
     const [actors, setActors] = useState([]);
+    const [allActors, setAllActors] = useState([]); // Store all for filtering
     const [isLoading, setIsLoading] = useState(true);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [threatFilter, setThreatFilter] = useState('all'); // all, critical, high, low
 
     useEffect(() => {
         const fetchActors = async () => {
             try {
                 setIsLoading(true);
-                const result = await pb.collection('scac_actor_profiles').getList(1, 50, {
+                const result = await pb.collection('scac_actor_profiles').getList(1, 100, {
                     sort: '-avg_threat_level',
                 });
 
@@ -30,6 +33,7 @@ const IntelRegistry = () => {
                     incidentCount: record.incident_count,
                     behavioral_signature: record.behavioral_signature || {}
                 }));
+                setAllActors(mappedActors);
                 setActors(mappedActors);
             } catch (err) {
                 console.error("Error fetching actors:", err);
@@ -39,9 +43,91 @@ const IntelRegistry = () => {
         };
 
         fetchActors();
+
+        // Real-time subscription
+        pb.collection('scac_actor_profiles').subscribe('*', function (e) {
+            if (e.action === 'create' || e.action === 'update') {
+                const newActor = {
+                    id: e.record.actor_id,
+                    name: e.record.actor_id,
+                    type: e.record.behavioral_signature?.type || 'Unknown',
+                    threat: e.record.avg_threat_level >= 4 ? 'Critical' : (e.record.avg_threat_level >= 3 ? 'High' : 'Low'),
+                    origin: e.record.behavioral_signature?.origin || 'Unknown',
+                    lastSeen: new Date(e.record.updated).toLocaleDateString(),
+                    riskScore: Math.round(e.record.avg_threat_level * 20),
+                    status: e.record.status,
+                    incidentCount: e.record.incident_count,
+                    behavioral_signature: e.record.behavioral_signature || {}
+                };
+
+                setAllActors(prev => {
+                    const exists = prev.find(a => a.id === newActor.id);
+                    if (exists) {
+                        return prev.map(a => a.id === newActor.id ? newActor : a);
+                    }
+                    return [newActor, ...prev];
+                });
+            }
+        });
+
+        return () => {
+            pb.collection('scac_actor_profiles').unsubscribe('*');
+        };
     }, []);
 
-    // Generate deterministic mock signatures based on actor ID
+    // Apply search and filter
+    useEffect(() => {
+        let filtered = [...allActors];
+
+        // Threat filter
+        if (threatFilter !== 'all') {
+            filtered = filtered.filter(actor => actor.threat.toLowerCase() === threatFilter);
+        }
+
+        // Search filter
+        if (searchQuery.trim()) {
+            const query = searchQuery.toLowerCase();
+            filtered = filtered.filter(actor =>
+                actor.id.toLowerCase().includes(query) ||
+                actor.name.toLowerCase().includes(query) ||
+                actor.origin.toLowerCase().includes(query) ||
+                actor.type.toLowerCase().includes(query) ||
+                actor.behavioral_signature?.known_ips?.some(ip => ip.toLowerCase().includes(query))
+            );
+        }
+
+        setActors(filtered);
+    }, [searchQuery, threatFilter, allActors]);
+
+    const handleExport = () => {
+        const headers = ['Actor ID', 'Type', 'Threat Level', 'Risk Score', 'Origin', 'Status', 'Incidents', 'Last Seen'];
+        const csvRows = [
+            headers.join(','),
+            ...actors.map(actor => [
+                actor.id,
+                actor.type,
+                actor.threat,
+                actor.riskScore,
+                actor.origin,
+                actor.status,
+                actor.incidentCount,
+                actor.lastSeen
+            ].join(','))
+        ];
+
+        const csvContent = csvRows.join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `intel_registry_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+    };
+
+    // Generate deterministic signatures based on actor behavioral data
     const getSignaturesForActor = (actorId) => {
         if (!actorId) return [];
         const hash = actorId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
@@ -64,17 +150,41 @@ const IntelRegistry = () => {
             {/* Sidebar List */}
             <div className="w-1/3 bg-slate-900 border border-slate-800 rounded-lg flex flex-col overflow-hidden">
                 <div className="p-4 border-b border-slate-800 bg-slate-950/80 backdrop-blur-md sticky top-0 z-10">
-                    <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                        <Users className="w-5 h-5 text-emerald-500" />
-                        Intel Registry
-                    </h2>
-                    <div className="mt-4 relative">
+                    <div className="flex justify-between items-center mb-4">
+                        <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                            <Users className="w-5 h-5 text-emerald-500" />
+                            Intel Registry
+                        </h2>
+                        <button
+                            onClick={handleExport}
+                            className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded transition-colors"
+                        >
+                            Export
+                        </button>
+                    </div>
+                    <div className="relative mb-3">
                         <input
                             type="text"
                             placeholder="Search actors, IPs, hashes..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
                             className="w-full bg-slate-950 border border-slate-700 rounded-md py-2 pl-9 pr-3 text-sm text-slate-300 focus:outline-none focus:border-emerald-500 transition-colors"
                         />
                         <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                    </div>
+                    <div className="flex gap-2">
+                        {['all', 'critical', 'high', 'low'].map(filter => (
+                            <button
+                                key={filter}
+                                onClick={() => setThreatFilter(filter)}
+                                className={`px-2 py-1 text-xs font-medium rounded capitalize transition-colors ${threatFilter === filter
+                                    ? 'bg-emerald-600 text-white'
+                                    : 'bg-slate-800 text-slate-400 hover:text-white'
+                                    }`}
+                            >
+                                {filter}
+                            </button>
+                        ))}
                     </div>
                 </div>
 
@@ -147,16 +257,36 @@ const IntelRegistry = () => {
                                     <h3 className="text-sm font-semibold text-slate-300 mb-3 flex items-center">
                                         <Hash className="w-4 h-4 mr-2 text-emerald-500" /> Network Indicators
                                     </h3>
-                                    <ul className="space-y-2 text-sm text-slate-400">
-                                        <li className="flex justify-between border-b border-slate-800/50 pb-1">
-                                            <span>Known IPs</span>
-                                            <span className="font-mono text-slate-300">{selectedActor.behavioral_signature?.known_ips?.length || 0}</span>
-                                        </li>
-                                        <li className="flex justify-between border-b border-slate-800/50 pb-1">
-                                            <span>User Agents</span>
-                                            <span className="font-mono text-slate-300">{selectedActor.behavioral_signature?.user_agents?.length || 0}</span>
-                                        </li>
-                                    </ul>
+                                    <div className="space-y-3">
+                                        <div>
+                                            <div className="text-xs text-slate-500 mb-1">Known IPs ({selectedActor.behavioral_signature?.known_ips?.length || 0})</div>
+                                            <div className="space-y-1 max-h-32 overflow-y-auto custom-scrollbar">
+                                                {(selectedActor.behavioral_signature?.known_ips || []).length > 0 ? (
+                                                    selectedActor.behavioral_signature.known_ips.map((ip, i) => (
+                                                        <div key={i} className="text-xs font-mono text-slate-300 bg-slate-900/50 px-2 py-1 rounded">
+                                                            {ip}
+                                                        </div>
+                                                    ))
+                                                ) : (
+                                                    <div className="text-xs text-slate-600 italic">No IPs recorded</div>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div className="text-xs text-slate-500 mb-1">User Agents ({selectedActor.behavioral_signature?.user_agents?.length || 0})</div>
+                                            <div className="space-y-1 max-h-32 overflow-y-auto custom-scrollbar">
+                                                {(selectedActor.behavioral_signature?.user_agents || []).length > 0 ? (
+                                                    selectedActor.behavioral_signature.user_agents.map((ua, i) => (
+                                                        <div key={i} className="text-xs text-slate-300 bg-slate-900/50 px-2 py-1 rounded truncate" title={ua}>
+                                                            {ua}
+                                                        </div>
+                                                    ))
+                                                ) : (
+                                                    <div className="text-xs text-slate-600 italic">No user agents recorded</div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div className="bg-slate-800/30 border border-slate-800 p-4 rounded-lg">
                                     <h3 className="text-sm font-semibold text-slate-300 mb-3 flex items-center">

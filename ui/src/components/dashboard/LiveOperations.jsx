@@ -8,13 +8,17 @@ import {
 const LiveOperations = () => {
     const [activeTab, setActiveTab] = useState('all');
     const [logs, setLogs] = useState([]);
+    const [allLogs, setAllLogs] = useState([]); // Store all logs for filtering
     const [isLoading, setIsLoading] = useState(true);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [showFilterMenu, setShowFilterMenu] = useState(false);
+    const [riskFilter, setRiskFilter] = useState('all');
 
     useEffect(() => {
         const fetchLogs = async () => {
             try {
                 setIsLoading(true);
-                const result = await pb.collection('scac_access_logs').getList(1, 50, {
+                const result = await pb.collection('scac_access_logs').getList(1, 200, {
                     sort: '-created',
                 });
 
@@ -25,8 +29,10 @@ const LiveOperations = () => {
                     action: log.action,
                     resource: log.resource,
                     ip: log.context?.ip || 'unknown',
-                    risk: log.context?.risk || 'low'
+                    risk: log.context?.risk || 'low',
+                    category: log.context?.category || 'system' // For tab filtering
                 }));
+                setAllLogs(mappedLogs);
                 setLogs(mappedLogs);
             } catch (err) {
                 console.error("Error loading logs:", err);
@@ -47,8 +53,10 @@ const LiveOperations = () => {
                     action: e.record.action,
                     resource: e.record.resource,
                     ip: e.record.context?.ip || 'unknown',
-                    risk: e.record.context?.risk || 'low'
+                    risk: e.record.context?.risk || 'low',
+                    category: e.record.context?.category || 'system'
                 };
+                setAllLogs(prev => [newLog, ...prev]);
                 setLogs(prev => [newLog, ...prev]);
             }
         });
@@ -57,6 +65,69 @@ const LiveOperations = () => {
             pb.collection('scac_access_logs').unsubscribe('*');
         };
     }, []);
+
+    // Apply filters whenever tab, search, or risk filter changes
+    useEffect(() => {
+        let filtered = [...allLogs];
+
+        // Tab filtering
+        if (activeTab !== 'all') {
+            if (activeTab === 'threats') {
+                filtered = filtered.filter(log => log.risk === 'critical' || log.risk === 'high');
+            } else if (activeTab === 'system') {
+                filtered = filtered.filter(log => log.category === 'system' || log.action.includes('system'));
+            } else if (activeTab === 'auth') {
+                filtered = filtered.filter(log => log.action.includes('login') || log.action.includes('auth') || log.action.includes('access'));
+            }
+        }
+
+        // Risk filter
+        if (riskFilter !== 'all') {
+            filtered = filtered.filter(log => log.risk === riskFilter);
+        }
+
+        // Search filter
+        if (searchQuery.trim()) {
+            const query = searchQuery.toLowerCase();
+            filtered = filtered.filter(log =>
+                log.actor_id.toLowerCase().includes(query) ||
+                log.action.toLowerCase().includes(query) ||
+                log.resource.toLowerCase().includes(query) ||
+                log.ip.toLowerCase().includes(query) ||
+                log.id.toLowerCase().includes(query)
+            );
+        }
+
+        setLogs(filtered);
+    }, [activeTab, searchQuery, riskFilter, allLogs]);
+
+    const handleExport = () => {
+        // Convert logs to CSV
+        const headers = ['ID', 'Timestamp', 'Risk Level', 'Actor', 'Action', 'Resource', 'IP'];
+        const csvRows = [
+            headers.join(','),
+            ...logs.map(log => [
+                log.id,
+                log.timestamp,
+                log.risk,
+                log.actor_id,
+                log.action,
+                log.resource,
+                log.ip
+            ].join(','))
+        ];
+
+        const csvContent = csvRows.join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `scac_logs_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+    };
 
     const getRiskBadge = (risk) => {
         switch (risk) {
@@ -78,11 +149,43 @@ const LiveOperations = () => {
                     </h2>
                     <p className="text-slate-400 text-sm mt-1">Real-time situational awareness and event stream monitoring.</p>
                 </div>
-                <div className="flex gap-2">
-                    <button className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-medium rounded border border-slate-700 transition flex items-center">
-                        <Filter className="w-4 h-4 mr-2" /> Filter
-                    </button>
-                    <button className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-medium rounded border border-slate-700 transition flex items-center">
+                <div className="flex gap-2 relative">
+                    <div className="relative">
+                        <button
+                            onClick={() => setShowFilterMenu(!showFilterMenu)}
+                            className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-medium rounded border border-slate-700 transition flex items-center"
+                        >
+                            <Filter className="w-4 h-4 mr-2" /> Filter
+                            {riskFilter !== 'all' && <span className="ml-2 w-2 h-2 bg-emerald-500 rounded-full"></span>}
+                        </button>
+
+                        {showFilterMenu && (
+                            <div className="absolute right-0 mt-2 w-48 bg-slate-900 border border-slate-700 rounded-lg shadow-xl z-50">
+                                <div className="p-2">
+                                    <p className="text-xs text-slate-500 uppercase tracking-wider px-2 py-1">Risk Level</p>
+                                    {['all', 'critical', 'high', 'medium', 'low'].map(risk => (
+                                        <button
+                                            key={risk}
+                                            onClick={() => {
+                                                setRiskFilter(risk);
+                                                setShowFilterMenu(false);
+                                            }}
+                                            className={`w-full text-left px-3 py-2 text-sm rounded transition-colors capitalize ${riskFilter === risk
+                                                    ? 'bg-emerald-600 text-white'
+                                                    : 'text-slate-300 hover:bg-slate-800'
+                                                }`}
+                                        >
+                                            {risk}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                    <button
+                        onClick={handleExport}
+                        className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-medium rounded border border-slate-700 transition flex items-center"
+                    >
                         <Download className="w-4 h-4 mr-2" /> Export
                     </button>
                 </div>
@@ -110,6 +213,8 @@ const LiveOperations = () => {
                         <input
                             type="text"
                             placeholder="Search logs..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
                             className="bg-slate-950 border border-slate-700 rounded-md py-1.5 pl-8 pr-3 text-xs text-slate-300 w-64 focus:outline-none focus:border-emerald-500 transition-colors"
                         />
                         <Search className="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-1/2 -translate-y-1/2" />

@@ -13,8 +13,6 @@ const Dashboard = () => {
         activeSessions: 0,
         threatsBlocked: 0,
         systemLoad: '0%', // Mock for now, or derive from logs
-        threatsBlocked: 0,
-        systemLoad: '0%', // Mock for now, or derive from logs
         securityScore: 0
     });
     const [recentLogs, setRecentLogs] = useState([]);
@@ -138,7 +136,6 @@ const Dashboard = () => {
 
             } catch (err) {
                 console.error("Error fetching dashboard data:", err);
-                // Fallback to mock data or empty state handled by default state
             }
         };
 
@@ -227,14 +224,14 @@ const Dashboard = () => {
                                     {/* View Toggle (Pointer events enabled) */}
                                     <div className="flex bg-slate-950/80 rounded-lg p-1 border border-slate-800 pointer-events-auto backdrop-blur-md">
                                         <button
-                                            onClick={() => setSelectedView('2D')}
-                                            className={`px-3 py-1 text-[10px] font-bold rounded transition-all tracking-wider ${selectedView === '2D' ? 'bg-slate-800 text-white shadow-lg border border-slate-700' : 'text-slate-500 hover:text-white'}`}
+                                            onClick={() => setViewMode('2D')}
+                                            className={`px-3 py-1 text-[10px] font-bold rounded transition-all tracking-wider ${viewMode === '2D' ? 'bg-slate-800 text-white shadow-lg border border-slate-700' : 'text-slate-500 hover:text-white'}`}
                                         >
                                             TACTICAL 2D
                                         </button>
                                         <button
-                                            onClick={() => setSelectedView('Globe')}
-                                            className={`px-3 py-1 text-[10px] font-bold rounded transition-all tracking-wider ${selectedView === 'Globe' ? 'bg-indigo-500/20 text-indigo-300 shadow-lg border border-indigo-500/50' : 'text-slate-500 hover:text-white'}`}
+                                            onClick={() => setViewMode('Globe')}
+                                            className={`px-3 py-1 text-[10px] font-bold rounded transition-all tracking-wider ${viewMode === 'Globe' ? 'bg-indigo-500/20 text-indigo-300 shadow-lg border border-indigo-500/50' : 'text-slate-500 hover:text-white'}`}
                                         >
                                             ORBITAL 3D
                                         </button>
@@ -244,7 +241,7 @@ const Dashboard = () => {
                                 <ErrorBoundary debug={true}>
                                     <MapVisualization
                                         logs={recentLogs}
-                                        viewMode={selectedView}
+                                        viewMode={viewMode}
                                         nodeOverrides={nodeOverrides}
                                         onProtocolExecute={handleProtocolExecute}
                                     />
@@ -262,7 +259,7 @@ const Dashboard = () => {
 
                         {/* RIGHT COLUMN: Intel & Feed */}
                         <div className="md:col-span-1 flex flex-col gap-6 h-full overflow-hidden">
-                            <ThreatLevel level={threatLevel} />
+                            <ThreatLevel level={6 - threatLevel} />
                             <div className="flex-1 min-h-0">
                                 <ActivityFeed logs={recentLogs} />
                             </div>
